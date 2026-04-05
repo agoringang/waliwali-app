@@ -80,7 +80,12 @@ export default async function EventPage({ params }: Props) {
 
   const settlements = rawSettlements.map((row) => {
     const matched = event.settlements.find(
-      (item) =>
+      (item: {
+      fromMemberId: number;
+      toMemberId: number;
+      amount: number;
+      isCompleted: boolean;
+    }) =>
         item.fromMemberId === row.fromMemberId &&
         item.toMemberId === row.toMemberId &&
         item.amount === row.amount
@@ -140,7 +145,7 @@ export default async function EventPage({ params }: Props) {
         <EventClient
           publicId={event.publicId}
           eventName={event.name}
-          members={event.members.map((member) => ({
+          members={event.members.map((member: { id: number; name: string }) => ({
             id: member.id,
             name: member.name,
           }))}
