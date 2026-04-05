@@ -3,16 +3,12 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type ShareEventData = {
-  eventName: string;
-  members: string[];
-};
-
 export default function Home() {
   const router = useRouter();
   const [eventName, setEventName] = useState("");
   const [memberInput, setMemberInput] = useState("");
   const [members, setMembers] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const trimmedMembers = useMemo(() => {
     return members
@@ -41,14 +37,37 @@ export default function Home() {
     }
   };
 
-  const handleCreateEvent = () => {
-    const payload: ShareEventData = {
-      eventName: eventName.trim(),
-      members: trimmedMembers,
-    };
+  const handleCreateEvent = async () => {
+    if (!eventName.trim() || trimmedMembers.length === 0 || isSubmitting) return;
 
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    router.push(`/event?data=${encoded}`);
+    try {
+      setIsSubmitting(true);
+
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventName: eventName.trim(),
+          members: trimmedMembers,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        alert(error?.message ?? "イベント作成に失敗しました");
+        return;
+      }
+
+      const data = await res.json();
+      router.push(`/event/${data.publicId}`);
+    } catch (error) {
+      console.error(error);
+      alert("イベント作成に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,7 +141,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={addMember}
-                    className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-700 px-5 py-4 text-sm font-bold text-white shadow-[0_14px_32px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.24)]"
+                    className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-700 px-5 py-4 text-sm font-bold text-white shadow-[0_14px_32px_rgba(15,23,42,0.18)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.24)] active:translate-y-[1px] active:scale-[0.99]"
                   >
                     追加
                   </button>
@@ -146,7 +165,7 @@ export default function Home() {
                           <button
                             type="button"
                             onClick={() => removeMember(member)}
-                            className="text-sm font-bold text-slate-400 transition hover:text-rose-500"
+                            className="text-sm font-bold text-slate-400 transition hover:text-rose-500 active:scale-90"
                             aria-label={`${member}を削除`}
                           >
                             ×
@@ -208,10 +227,10 @@ export default function Home() {
             <button
               type="button"
               onClick={handleCreateEvent}
-              className="mt-6 w-full rounded-[24px] bg-gradient-to-br from-cyan-500 via-sky-500 to-indigo-500 px-4 py-4 text-base font-black text-white shadow-[0_18px_40px_rgba(14,116,144,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(14,116,144,0.34)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-              disabled={!eventName.trim() || trimmedMembers.length === 0}
+              className="mt-6 w-full rounded-[24px] bg-gradient-to-br from-cyan-500 via-sky-500 to-indigo-500 px-4 py-4 text-base font-black text-white shadow-[0_18px_40px_rgba(14,116,144,0.28)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(14,116,144,0.34)] active:translate-y-[1px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100"
+              disabled={!eventName.trim() || trimmedMembers.length === 0 || isSubmitting}
             >
-              イベントを作成
+              {isSubmitting ? "作成中..." : "イベントを作成"}
             </button>
           </section>
         </div>

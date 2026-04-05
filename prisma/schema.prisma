@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Event {
+  id          Int                    @id @default(autoincrement())
+  publicId    String                 @unique
+  name        String
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  members     Member[]
+  expenses    Expense[]
+  settlements SettlementCompletion[]
+
+  @@index([publicId])
+}
+
+model Member {
+  id            Int                  @id @default(autoincrement())
+  eventId       Int
+  name          String
+
+  event         Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  paidExpenses  Expense[]            @relation("ExpensePayer")
+  shares        ExpenseParticipant[]
+
+  @@unique([eventId, name])
+  @@index([eventId])
+}
+
+model Expense {
+  id            Int                  @id @default(autoincrement())
+  eventId       Int
+  payerMemberId Int
+  title         String
+  amount        Int
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  event         Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  payer         Member               @relation("ExpensePayer", fields: [payerMemberId], references: [id])
+  participants  ExpenseParticipant[]
+
+  @@index([eventId])
+  @@index([payerMemberId])
+}
+
+model ExpenseParticipant {
+  id        Int      @id @default(autoincrement())
+  expenseId Int
+  memberId  Int
+
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, memberId])
+  @@index([expenseId])
+  @@index([memberId])
+}
+
+model SettlementCompletion {
+  id           Int      @id @default(autoincrement())
+  eventId      Int
+  fromMemberId Int
+  toMemberId   Int
+  amount       Int
+  isCompleted  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, fromMemberId, toMemberId, amount])
+  @@index([eventId])
+}
