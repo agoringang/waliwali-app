@@ -12,6 +12,44 @@ type Props = {
   }>;
 };
 
+type MemberView = {
+  id: number;
+  name: string;
+};
+
+type ExpenseParticipantView = {
+  memberId: number;
+  member: {
+    name: string;
+  };
+};
+
+type ExpenseView = {
+  id: number;
+  payerMemberId: number;
+  payer: {
+    name: string;
+  };
+  title: string;
+  amount: number;
+  participants: ExpenseParticipantView[];
+};
+
+type SettlementRow = {
+  fromMemberId: number;
+  fromName: string;
+  toMemberId: number;
+  toName: string;
+  amount: number;
+};
+
+type SettlementCompletionRow = {
+  fromMemberId: number;
+  toMemberId: number;
+  amount: number;
+  isCompleted: boolean;
+};
+
 export default async function EventPage({ params }: Props) {
   const { publicId } = await params;
 
@@ -59,33 +97,26 @@ export default async function EventPage({ params }: Props) {
   }
 
   const balances = calculateBalances(
-    event.members.map((member: { id: number; name: string }) => ({
+    event.members.map((member: MemberView) => ({
       id: member.id,
       name: member.name,
     })),
-    event.expenses.map((expense: {
-      payerMemberId: number;
-      amount: number;
-      participants: { memberId: number }[];
-    }) => ({
+    event.expenses.map((expense: ExpenseView) => ({
       payerMemberId: expense.payerMemberId,
       amount: expense.amount,
-      participants: expense.participants.map((item: { memberId: number }) => ({
-        memberId: item.memberId,
-      })),
+      participants: expense.participants.map(
+        (item: { memberId: number }) => ({
+          memberId: item.memberId,
+        })
+      ),
     }))
   );
 
   const rawSettlements = calculateSettlements(balances);
 
-  const settlements = rawSettlements.map((row) => {
+  const settlements = rawSettlements.map((row: SettlementRow) => {
     const matched = event.settlements.find(
-      (item: {
-      fromMemberId: number;
-      toMemberId: number;
-      amount: number;
-      isCompleted: boolean;
-    }) =>
+      (item: SettlementCompletionRow) =>
         item.fromMemberId === row.fromMemberId &&
         item.toMemberId === row.toMemberId &&
         item.amount === row.amount
@@ -122,7 +153,7 @@ export default async function EventPage({ params }: Props) {
             <p className="text-slate-500">メンバーがいません</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {event.members.map((member: { id: number; name: string }) => (
+              {event.members.map((member: MemberView) => (
                 <span
                   key={member.id}
                   className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
@@ -136,7 +167,7 @@ export default async function EventPage({ params }: Props) {
 
         <ExpenseForm
           publicId={event.publicId}
-          members={event.members.map((member: { id: number; name: string }) => ({
+          members={event.members.map((member: MemberView) => ({
             id: member.id,
             name: member.name,
           }))}
@@ -145,20 +176,22 @@ export default async function EventPage({ params }: Props) {
         <EventClient
           publicId={event.publicId}
           eventName={event.name}
-          members={event.members.map((member: { id: number; name: string }) => ({
+          members={event.members.map((member: MemberView) => ({
             id: member.id,
             name: member.name,
           }))}
-          expenses={event.expenses.map((expense) => ({
+          expenses={event.expenses.map((expense: ExpenseView) => ({
             id: expense.id,
             payerMemberId: expense.payerMemberId,
             payerName: expense.payer.name,
             title: expense.title,
             amount: expense.amount,
-            participants: expense.participants.map((item) => ({
-              memberId: item.memberId,
-              name: item.member.name,
-            })),
+            participants: expense.participants.map(
+              (item: ExpenseParticipantView) => ({
+                memberId: item.memberId,
+                name: item.member.name,
+              })
+            ),
           }))}
           balances={balances}
           settlements={settlements}
