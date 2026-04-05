@@ -59,14 +59,18 @@ export default async function EventPage({ params }: Props) {
   }
 
   const balances = calculateBalances(
-    event.members.map((member) => ({
+    event.members.map((member: { id: number; name: string }) => ({
       id: member.id,
       name: member.name,
     })),
-    event.expenses.map((expense) => ({
+    event.expenses.map((expense: {
+      payerMemberId: number;
+      amount: number;
+      participants: { memberId: number }[];
+    }) => ({
       payerMemberId: expense.payerMemberId,
       amount: expense.amount,
-      participants: expense.participants.map((item) => ({
+      participants: expense.participants.map((item: { memberId: number }) => ({
         memberId: item.memberId,
       })),
     }))
@@ -113,7 +117,7 @@ export default async function EventPage({ params }: Props) {
             <p className="text-slate-500">メンバーがいません</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {event.members.map((member) => (
+              {event.members.map((member: { id: number; name: string }) => (
                 <span
                   key={member.id}
                   className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
@@ -127,7 +131,7 @@ export default async function EventPage({ params }: Props) {
 
         <ExpenseForm
           publicId={event.publicId}
-          members={event.members.map((member) => ({
+          members={event.members.map((member: { id: number; name: string }) => ({
             id: member.id,
             name: member.name,
           }))}
