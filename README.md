@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💸 WaliWali - 割り勘管理アプリ
 
-## Getting Started
+複数人での支払いを簡単に管理し、誰が誰にいくら払うべきかを自動で計算するアプリです。
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌐 デモ
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+https://waliwali-app.vercel.app
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ 主な機能
 
-## Learn More
+### 🧾 支払いの追加
+- 誰が支払ったか
+- 金額
+- 参加者  
+を入力するだけで記録
 
-To learn more about Next.js, take a look at the following resources:
+### 👥 メンバー管理
+- イベントごとにメンバーを管理
+- 重複排除・入力補助あり
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🔄 自動精算ロジック
+- 支払い履歴から最適な支払い関係を算出
+- 「誰が誰にいくら払うか」を可視化
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### ✅ 支払い完了チェック
+- 清算済みをトグルで管理
 
-## Deploy on Vercel
+### 🔗 URL共有
+- イベント単位でURLを共有
+- 同じページで更新可能
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🧠 清算ロジック
+
+1. 各メンバーの収支を計算（balance）
+2. プラス（受け取り）とマイナス（支払い）を分離
+3. 最小回数になるようマッチング
+
+---
+
+## 🛠 技術スタック
+
+### Frontend
+- Next.js 16 (App Router)
+- React
+- Tailwind CSS
+
+### Backend
+- Next.js Route Handler
+- Prisma ORM
+
+### Database
+- PostgreSQL (Supabase)
+
+### Hosting
+- Vercel
