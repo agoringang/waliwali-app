@@ -70,7 +70,7 @@ export async function POST(req: Request, { params }: Props) {
     }
 
     const memberIds = new Set<number>(
-      event.members.map((member) => member.id)
+      event.members.map((member: { id: number }) => member.id)
     );
 
     if (!memberIds.has(payerMemberId)) {

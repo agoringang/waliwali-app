@@ -78,8 +78,10 @@ export async function PATCH(req: Request, { params }: Props) {
         { status: 404 }
       );
     }
+    const memberIds = new Set<number>(
+      event.members.map((member: { id: number }) => member.id)
+    );
 
-    const memberIds = new Set<number>(event.members.map((member) => member.id));
 
     if (!memberIds.has(payerMemberId)) {
       return NextResponse.json(
