@@ -5,6 +5,7 @@ type Member = {
 
 type ExpenseParticipant = {
   memberId: number;
+  shareAmount: number;
 };
 
 type Expense = {
@@ -42,22 +43,8 @@ export function calculateBalances(
 
     balances[expense.payerMemberId] += expense.amount;
 
-    const participantIds = [...expense.participants]
-      .map((p) => p.memberId)
-      .sort((a, b) => a - b);
-
-    const baseShare = Math.floor(expense.amount / participantIds.length);
-    let remainder = expense.amount % participantIds.length;
-
-    for (const memberId of participantIds) {
-      let share = baseShare;
-
-      if (remainder > 0) {
-        share += 1;
-        remainder -= 1;
-      }
-
-      balances[memberId] -= share;
+    for (const participant of expense.participants) {
+      balances[participant.memberId] -= participant.shareAmount;
     }
   }
 

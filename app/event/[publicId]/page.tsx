@@ -1,10 +1,11 @@
+import Link from "next/link";
 import { prisma } from "../../../src/lib/prisma";
-import ExpenseForm from "./expense-form";
 import EventClient from "./event-client";
 import {
   calculateBalances,
   calculateSettlements,
 } from "../../../src/lib/settlement";
+import OtherAppsLink from "../../ui/other-apps-link";
 
 type Props = {
   params: Promise<{
@@ -19,6 +20,7 @@ type MemberView = {
 
 type ExpenseParticipantView = {
   memberId: number;
+  shareAmount: number;
   member: {
     name: string;
   };
@@ -105,8 +107,9 @@ export default async function EventPage({ params }: Props) {
       payerMemberId: expense.payerMemberId,
       amount: expense.amount,
       participants: expense.participants.map(
-        (item: { memberId: number }) => ({
+        (item: { memberId: number; shareAmount: number }) => ({
           memberId: item.memberId,
+          shareAmount: item.shareAmount,
         })
       ),
     }))
@@ -129,49 +132,44 @@ export default async function EventPage({ params }: Props) {
   });
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8fffe,_#eef6ff_45%,_#f6f7fb_100%)] px-4 py-8 text-slate-900 sm:px-6">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <header className="rounded-[28px] border border-white/80 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <main className="relative min-h-dvh overflow-hidden bg-[linear-gradient(180deg,#dff3ff_0%,#edf7ff_20%,#f9fbff_54%,#dff5ff_100%)] px-4 py-5 text-[#1d1d1f] sm:px-6 sm:py-8">
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-sky-200/55 blur-3xl" />
+      <div className="pointer-events-none absolute right-[-8rem] top-16 h-96 w-96 rounded-full bg-cyan-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-16 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-sky-100/70 blur-3xl" />
+
+      <div className="relative mx-auto max-w-6xl">
+        <div className="flex justify-end">
+          <OtherAppsLink />
+        </div>
+
+        <header className="mt-4 rounded-[30px] border border-white/80 bg-white/68 p-5 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.2)] backdrop-blur-xl xl:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-black">{event.name}</h1>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="text-[13px] font-semibold tracking-[0.22em] text-sky-700">
+                WALIWALI
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-[-0.07em] text-[#1d1d1f]">
+                {event.name}
+              </h1>
+              <p className="mt-2 text-sm text-neutral-500">
                 イベントID: {event.publicId}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              共有して同じイベントを一緒に更新できます
+            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+              <span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700">
+                {event.members.length}人
+              </span>
+
+              <Link
+                href="/"
+                className="inline-flex items-center rounded-full border border-[#dce7f4] bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:text-[#1d1d1f]"
+              >
+                新しいイベントを作る
+              </Link>
             </div>
           </div>
         </header>
-
-        <section className="rounded-[28px] border border-white/80 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-          <h2 className="mb-4 text-lg font-black">メンバー</h2>
-
-          {event.members.length === 0 ? (
-            <p className="text-slate-500">メンバーがいません</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {event.members.map((member: MemberView) => (
-                <span
-                  key={member.id}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
-                >
-                  {member.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <ExpenseForm
-          publicId={event.publicId}
-          members={event.members.map((member: MemberView) => ({
-            id: member.id,
-            name: member.name,
-          }))}
-        />
 
         <EventClient
           publicId={event.publicId}
@@ -190,6 +188,7 @@ export default async function EventPage({ params }: Props) {
               (item: ExpenseParticipantView) => ({
                 memberId: item.memberId,
                 name: item.member.name,
+                shareAmount: item.shareAmount,
               })
             ),
           }))}

@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../../src/lib/prisma";
+import {
+  buildEqualParticipantShares,
+  sumParticipantShares,
+  type ParticipantShare,
+} from "../../../../../../src/lib/expense-shares";
 
 type UpdateExpenseBody = {
   payerMemberId?: number;
   title?: string;
   amount?: number;
   participantMemberIds?: number[];
+  participantShares?: ParticipantShare[];
 };
 
 type Props = {
@@ -14,6 +20,51 @@ type Props = {
     expenseId: string;
   }>;
 };
+
+function resolveParticipantShares(
+  amount: number,
+  rawParticipantMemberIds?: number[],
+  rawParticipantShares?: ParticipantShare[]
+) {
+  if (Array.isArray(rawParticipantShares) && rawParticipantShares.length > 0) {
+    if (
+      rawParticipantShares.some(
+        (share) =>
+          typeof share?.memberId !== "number" ||
+          !Number.isInteger(share.memberId) ||
+          typeof share?.amount !== "number" ||
+          !Number.isInteger(share.amount) ||
+          share.amount <= 0
+      )
+    ) {
+      return {
+        error: "個別金額の入力内容が不正です",
+        participantShares: [] as ParticipantShare[],
+      };
+    }
+
+    return {
+      participantShares: rawParticipantShares,
+    };
+  }
+
+  if (
+    Array.isArray(rawParticipantMemberIds) &&
+    rawParticipantMemberIds.length > 0 &&
+    rawParticipantMemberIds.every(
+      (id) => typeof id === "number" && Number.isInteger(id)
+    )
+  ) {
+    return {
+      participantShares: buildEqualParticipantShares(amount, rawParticipantMemberIds),
+    };
+  }
+
+  return {
+    error: "対象メンバーを1人以上選んでください",
+    participantShares: [] as ParticipantShare[],
+  };
+}
 
 export async function PATCH(req: Request, { params }: Props) {
   try {
@@ -24,7 +75,6 @@ export async function PATCH(req: Request, { params }: Props) {
     const rawPayerMemberId = body.payerMemberId;
     const rawTitle = body.title;
     const rawAmount = body.amount;
-    const rawParticipantMemberIds = body.participantMemberIds;
 
     if (
       !publicId ||
@@ -35,12 +85,7 @@ export async function PATCH(req: Request, { params }: Props) {
       !rawTitle.trim() ||
       typeof rawAmount !== "number" ||
       !Number.isFinite(rawAmount) ||
-      rawAmount <= 0 ||
-      !Array.isArray(rawParticipantMemberIds) ||
-      rawParticipantMemberIds.length === 0 ||
-      rawParticipantMemberIds.some(
-        (id) => typeof id !== "number" || !Number.isInteger(id)
-      )
+      rawAmount <= 0
     ) {
       return NextResponse.json(
         { message: "入力内容が不正です" },
@@ -51,7 +96,15 @@ export async function PATCH(req: Request, { params }: Props) {
     const payerMemberId = rawPayerMemberId;
     const title = rawTitle.trim();
     const amount = rawAmount;
-    const participantMemberIds = rawParticipantMemberIds;
+    const { error, participantShares } = resolveParticipantShares(
+      amount,
+      body.participantMemberIds,
+      body.participantShares
+    );
+
+    if (error) {
+      return NextResponse.json({ message: error }, { status: 400 });
+    }
 
     const event = await prisma.event.findUnique({
       where: { publicId },
@@ -78,10 +131,11 @@ export async function PATCH(req: Request, { params }: Props) {
         { status: 404 }
       );
     }
+
     const memberIds = new Set<number>(
       event.members.map((member: { id: number }) => member.id)
     );
-
+    const uniqueParticipantIds = new Set<number>();
 
     if (!memberIds.has(payerMemberId)) {
       return NextResponse.json(
@@ -90,13 +144,26 @@ export async function PATCH(req: Request, { params }: Props) {
       );
     }
 
-    const hasInvalidParticipant = participantMemberIds.some(
-      (id) => !memberIds.has(id)
-    );
+    const hasInvalidParticipant = participantShares.some((share) => {
+      if (uniqueParticipantIds.has(share.memberId)) {
+        return true;
+      }
+
+      uniqueParticipantIds.add(share.memberId);
+
+      return !memberIds.has(share.memberId);
+    });
 
     if (hasInvalidParticipant) {
       return NextResponse.json(
         { message: "対象メンバーに不正な値があります" },
+        { status: 400 }
+      );
+    }
+
+    if (sumParticipantShares(participantShares) !== amount) {
+      return NextResponse.json(
+        { message: "参加者ごとの金額合計を支払い合計に合わせてください" },
         { status: 400 }
       );
     }
@@ -116,8 +183,9 @@ export async function PATCH(req: Request, { params }: Props) {
         title,
         amount,
         participants: {
-          create: participantMemberIds.map((memberId) => ({
-            memberId,
+          create: participantShares.map((share) => ({
+            memberId: share.memberId,
+            shareAmount: share.amount,
           })),
         },
       },
