@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="WaliWali">
+  <defs>
+    <linearGradient id="bg" x1="44" y1="30" x2="214" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8" />
+      <stop offset="0.52" stop-color="#0EA5E9" />
+      <stop offset="1" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="card" x1="76" y1="72" x2="174" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#F0F9FF" />
+    </linearGradient>
+    <filter id="soft-shadow" x="44" y="54" width="168" height="168" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#0F172A" flood-opacity="0.18" />
+    </filter>
+  </defs>
+  <rect width="256" height="256" rx="58" fill="url(#bg)" />
+  <path d="M0 0h256v102c-36 26-79 39-128 39S36 128 0 102V0Z" fill="#FFFFFF" opacity="0.18" />
+  <rect x="46" y="37" width="164" height="34" rx="17" fill="#FFFFFF" opacity="0.16" />
+  <g filter="url(#soft-shadow)">
+    <rect x="72" y="86" width="84" height="84" rx="24" fill="#FFFFFF" opacity="0.62" />
+    <rect x="100" y="86" width="84" height="84" rx="24" fill="#FFFFFF" opacity="0.76" />
+    <rect x="86" y="72" width="84" height="84" rx="24" fill="url(#card)" />
+    <path d="M128 137V92" stroke="#0284C7" stroke-width="9" stroke-linecap="round" />
+    <path d="M111 103l17 17 17-17" fill="none" stroke="#0284C7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M108 124h40M108 142h40" stroke="#0284C7" stroke-width="9" stroke-linecap="round" />
+  </g>
+</svg>

@@ -195,6 +195,10 @@ export default async function EventPage({ params }: Props) {
           balances={balances}
           settlements={settlements}
         />
+
+        <div className="mt-6 flex justify-center">
+          <OtherAppsLink />
+        </div>
       </div>
     </main>
   );

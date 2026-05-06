@@ -320,6 +320,10 @@ export default function Home() {
             </div>
           </section>
         </section>
+
+        <div className="mt-6 flex justify-center">
+          <OtherAppsLink />
+        </div>
       </div>
     </main>
   );
